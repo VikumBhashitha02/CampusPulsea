@@ -1,0 +1,345 @@
+@import 'tailwindcss';
+
+/* ============================================================================== */
+/* CampusPulse — Production Design System & Brand Tokens (Tailwind v4 @theme)      */
+/* ============================================================================== */
+
+@theme {
+  --color-cp-yellow: #feb703;
+  --color-cp-yellow-hover: #e5a400;
+  --color-cp-yellow-light: #fffbeb;
+  --color-cp-yellow-soft: #fef3c7;
+
+  --color-cp-navy: #0f172a;
+  --color-cp-navy-light: #1e293b;
+  --color-cp-navy-dark: #020617;
+
+  --color-cp-bg: #f8fafc;
+  --color-cp-surface: #ffffff;
+  --color-cp-surface-hover: #f1f5f9;
+  --color-cp-border: #e2e8f0;
+  --color-cp-border-light: #f1f5f9;
+  --color-cp-muted: #475569;
+  --color-cp-muted-light: #94a3b8;
+
+  --color-cp-success: #059669;
+  --color-cp-success-light: #ecfdf5;
+  --color-cp-danger: #dc2626;
+  --color-cp-danger-light: #fef2f2;
+  --color-cp-info: #2563eb;
+  --color-cp-info-light: #eff6ff;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, blinkmacsystemfont,
+    'Segoe UI', roboto, sans-serif;
+}
+
+:root {
+  --cp-yellow: #feb703;
+  --cp-yellow-hover: #e5a400;
+  --cp-navy: #0f172a;
+  --cp-white: #ffffff;
+  --cp-background: #f8fafc;
+  --cp-border: #e2e8f0;
+  --cp-muted: #475569;
+}
+
+/* ============================================================================== */
+/* Base & Global Reset                                                            */
+/* ============================================================================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-cp-bg);
+  color: var(--color-cp-navy);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+::selection {
+  background-color: #fef08a;
+  color: #0f172a;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid #feb703;
+  outline-offset: 2px;
+}
+
+/* ============================================================================== */
+/* Accessibility & Skip Link                                                      */
+/* ============================================================================== */
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -5rem;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--color-cp-navy);
+  color: var(--color-cp-surface);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+  top: 1rem;
+  outline: 2px solid var(--color-cp-yellow);
+  outline-offset: 2px;
+}
+
+/* ============================================================================== */
+/* Typography Scale                                                               */
+/* ============================================================================== */
+
+.text-display {
+  font-size: clamp(2.25rem, 4.5vw + 0.5rem, 3.5rem);
+  line-height: 1.12;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.text-page-title {
+  font-size: clamp(1.5rem, 2.5vw + 0.5rem, 2.25rem);
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.text-section-title {
+  font-size: clamp(1.125rem, 1.25vw + 0.5rem, 1.375rem);
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.text-body {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--color-cp-muted);
+}
+
+.text-meta {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  font-weight: 500;
+  color: var(--color-cp-muted-light);
+}
+
+/* ============================================================================== */
+/* Layout Containers & Spacing                                                    */
+/* ============================================================================== */
+
+.cp-page {
+  width: 100%;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+.section-container {
+  width: 100%;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 640px) {
+  .cp-page,
+  .section-container {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cp-page,
+  .section-container {
+    padding-inline: 2rem;
+  }
+}
+
+.cp-section {
+  padding-block: 2rem;
+}
+
+@media (min-width: 768px) {
+  .cp-section {
+    padding-block: 3rem;
+  }
+}
+
+/* ============================================================================== */
+/* Utility Button Classes                                                         */
+/* ============================================================================== */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.625rem;
+  background-color: var(--color-cp-yellow);
+  color: #0f172a;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.5625rem 1.125rem;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-cp-yellow-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(254, 183, 3, 0.25);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:focus-visible {
+  outline: 2px solid var(--color-cp-yellow);
+  outline-offset: 2px;
+}
+
+.btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.625rem;
+  background-color: var(--color-cp-surface);
+  color: var(--color-cp-navy);
+  border: 1px solid var(--color-cp-border);
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.5625rem 1.125rem;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-cp-bg);
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.05);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary:focus-visible {
+  outline: 2px solid var(--color-cp-yellow);
+  outline-offset: 2px;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none;
+}
+
+/* ============================================================================== */
+/* Utility Badges                                                                 */
+/* ============================================================================== */
+
+.badge-yellow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  background-color: var(--color-cp-yellow-light);
+  color: #92400e;
+  border: 1px solid #fde68a;
+  font-weight: 600;
+  padding: 0.1875rem 0.625rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.01em;
+}
+
+.badge-navy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  background-color: #f1f5f9;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  font-weight: 600;
+  padding: 0.1875rem 0.625rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.01em;
+}
+
+/* ============================================================================== */
+/* Subtle Glass & Card Elevation Helpers                                          */
+/* ============================================================================== */
+
+.glass-header {
+  background-color: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.card-hover-lift {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -6px rgba(15, 23, 42, 0.07), 0 4px 8px -2px rgba(15, 23, 42, 0.04);
+}
+
+/* ============================================================================== */
+/* Reduced Motion Preferences                                                     */
+/* ============================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

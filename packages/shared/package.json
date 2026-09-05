@@ -1,0 +1,22 @@
+{
+  "name": "@campuspulse/shared",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@campuspulse/config": "workspace:*",
+    "@campuspulse/types": "workspace:*",
+    "@campuspulse/validation": "workspace:*"
+  },
+  "devDependencies": {
+    "@campuspulse/typescript-config": "workspace:*",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0"
+  }
+}

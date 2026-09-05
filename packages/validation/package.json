@@ -1,0 +1,20 @@
+{
+  "name": "@campuspulse/validation",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@campuspulse/types": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@campuspulse/typescript-config": "workspace:*",
+    "typescript": "^5.5.0"
+  }
+}

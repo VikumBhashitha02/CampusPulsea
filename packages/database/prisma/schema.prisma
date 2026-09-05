@@ -1,0 +1,587 @@
+// ==============================================================================
+// CampusPulse — Database Architecture (PostgreSQL + Prisma)
+// ==============================================================================
+// Single source of truth for the relational schema across CampusPulse.
+// Generated client is exported from @campuspulse/database.
+// ==============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==============================================================================
+// 1. Enums
+// ==============================================================================
+
+enum RoleType {
+  STUDENT
+  ORGANIZER
+  FACULTY
+  UNIVERSITY_ADMIN
+  COMPANY
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum OrgStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum OrgType {
+  STUDENT_CLUB
+  ACADEMIC_SOCIETY
+  SPORTS_CLUB
+  FACULTY_BODY
+  UNIVERSITY_OFFICE
+  COMPANY
+  COMMUNITY
+}
+
+enum OrgMemberRole {
+  LEADER
+  MANAGER
+  MEMBER
+}
+
+enum EventStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  REJECTED
+  CANCELLED
+  COMPLETED
+  EXPIRED
+}
+
+enum EventMode {
+  IN_PERSON
+  ONLINE
+  HYBRID
+}
+
+enum RegistrationStatus {
+  REGISTERED
+  WAITLISTED
+  CANCELLED
+  ATTENDED
+}
+
+enum TeamRole {
+  LEADER
+  MEMBER
+}
+
+enum TeamRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum NotificationType {
+  EVENT_DEADLINE
+  EVENT_UPDATED
+  EVENT_CANCELLED
+  NEW_RECOMMENDATION
+  TEAM_REQUEST
+  TEAM_REQUEST_ACCEPTED
+  TEAM_REQUEST_REJECTED
+  EVENT_REMINDER
+  REGISTRATION_CONFIRMED
+  SYSTEM
+  MODERATION
+}
+
+enum ReportTarget {
+  EVENT
+  ORGANIZATION
+  USER
+  TEAM
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum OpportunityCategoryType {
+  ACADEMIC
+  CAREER
+  COMPETITIVE
+  RESEARCH
+  SOCIAL
+  CULTURAL
+  SPORTS
+  MUSIC
+  OTHER
+}
+
+// ==============================================================================
+// 2. User & Identity Models
+// ==============================================================================
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String?   @map("password_hash")
+  name            String
+  avatarUrl       String?   @map("avatar_url")
+  isEmailVerified Boolean   @default(false) @map("is_email_verified")
+  isActive        Boolean   @default(true) @map("is_active")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relationships
+  roles               UserRoleAssignment[]
+  studentProfile      StudentProfile?
+  organizationMembers OrganizationMember[]
+  eventRegistrations  EventRegistration[]
+  eventBookmarks      EventBookmark[]
+  teamsCreated        Team[]               @relation("TeamCreator")
+  teamMemberships     TeamMember[]
+  teamJoinRequests    TeamJoinRequest[]
+  notifications       Notification[]
+  reportsFiled        Report[]             @relation("ReportedBy")
+  verificationsFiled  Verification[]       @relation("VerificationRequester")
+  verificationsReview Verification[]       @relation("VerificationReviewer")
+
+  @@index([email])
+  @@index([isActive])
+  @@map("users")
+}
+
+model Role {
+  id          String               @id @default(cuid())
+  name        RoleType             @unique
+  description String?
+  createdAt   DateTime             @default(now()) @map("created_at")
+  users       UserRoleAssignment[]
+
+  @@map("roles")
+}
+
+model UserRoleAssignment {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  roleId     String   @map("role_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_role_assignments")
+}
+
+model StudentProfile {
+  id              String    @id @default(cuid())
+  userId          String    @unique @map("user_id")
+  universityId    String    @map("university_id")
+  facultyId       String?   @map("faculty_id")
+  departmentId    String?   @map("department_id")
+  studentIdNumber String?   @map("student_id_number")
+  batchYear       Int?      @map("batch_year")
+  bio             String?   @db.Text
+  githubUrl       String?   @map("github_url")
+  linkedinUrl     String?   @map("linkedin_url")
+  websiteUrl      String?   @map("website_url")
+  skills          String[]  @default([])
+  interests       String[]  @default([])
+  careerInterests String[]  @default([]) @map("career_interests")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  university University  @relation(fields: [universityId], references: [id], onDelete: Restrict)
+  faculty    Faculty?    @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@index([universityId])
+  @@index([facultyId])
+  @@index([departmentId])
+  @@map("student_profiles")
+}
+
+// ==============================================================================
+// 3. Academic Hierarchy Models
+// ==============================================================================
+
+model University {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  code        String   @unique
+  country     String   @default("Sri Lanka")
+  city        String
+  logoUrl     String?  @map("logo_url")
+  bannerUrl   String?  @map("banner_url")
+  domain      String?  @unique
+  websiteUrl  String?  @map("website_url")
+  description String?  @db.Text
+  isVerified  Boolean  @default(false) @map("is_verified")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  faculties       Faculty[]
+  organizations   Organization[]
+  studentProfiles StudentProfile[]
+  events          Event[]
+
+  @@index([slug])
+  @@index([code])
+  @@map("universities")
+}
+
+model Faculty {
+  id           String   @id @default(cuid())
+  universityId String   @map("university_id")
+  name         String
+  slug         String
+  code         String
+  description  String?  @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  university      University       @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  departments     Department[]
+  studentProfiles StudentProfile[]
+  events          Event[]
+
+  @@unique([universityId, slug])
+  @@unique([universityId, code])
+  @@index([universityId])
+  @@map("faculties")
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  facultyId   String   @map("faculty_id")
+  name        String
+  slug        String
+  code        String
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  faculty         Faculty          @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+  studentProfiles StudentProfile[]
+  events          Event[]
+
+  @@unique([facultyId, slug])
+  @@unique([facultyId, code])
+  @@index([facultyId])
+  @@map("departments")
+}
+
+// ==============================================================================
+// 4. Organization & Membership Models
+// ==============================================================================
+
+model Organization {
+  id           String    @id @default(cuid())
+  universityId String?   @map("university_id")
+  name         String
+  slug         String    @unique
+  description  String?   @db.Text
+  type         OrgType   @default(STUDENT_CLUB)
+  status       OrgStatus @default(PENDING)
+  logoUrl      String?   @map("logo_url")
+  bannerUrl    String?   @map("banner_url")
+  email        String?
+  websiteUrl   String?   @map("website_url")
+  instagramUrl String?   @map("instagram_url")
+  linkedinUrl  String?   @map("linkedin_url")
+  isVerified   Boolean   @default(false) @map("is_verified")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  university    University?          @relation(fields: [universityId], references: [id], onDelete: SetNull)
+  members       OrganizationMember[]
+  events        Event[]
+  verifications Verification[]
+
+  @@index([universityId])
+  @@index([slug])
+  @@index([status])
+  @@index([type])
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String        @id @default(cuid())
+  organizationId String        @map("organization_id")
+  userId         String        @map("user_id")
+  role           OrgMemberRole @default(MEMBER)
+  title          String?
+  joinedAt       DateTime      @default(now()) @map("joined_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("organization_members")
+}
+
+// ==============================================================================
+// 5. Category & Event Models
+// ==============================================================================
+
+model Category {
+  id          String                  @id @default(cuid())
+  name        String                  @unique
+  slug        String                  @unique
+  type        OpportunityCategoryType @default(OTHER)
+  description String?
+  icon        String?
+  isActive    Boolean                 @default(true) @map("is_active")
+  createdAt   DateTime                @default(now()) @map("created_at")
+
+  events Event[]
+
+  @@index([slug])
+  @@index([type])
+  @@index([isActive])
+  @@map("categories")
+}
+
+model Event {
+  id                   String      @id @default(cuid())
+  organizationId       String      @map("organization_id")
+  categoryId           String      @map("category_id")
+  universityId         String?     @map("university_id")
+  facultyId            String?     @map("faculty_id")
+  departmentId         String?     @map("department_id")
+  title                String
+  slug                 String      @unique
+  shortDescription     String?     @map("short_description") @db.VarChar(300)
+  description          String      @db.Text
+  bannerUrl            String?     @map("banner_url")
+  coverImageUrl        String?     @map("cover_image_url")
+  status               EventStatus @default(DRAFT)
+  mode                 EventMode   @default(IN_PERSON)
+  location             String?
+  venue                String?
+  meetingUrl           String?     @map("meeting_url")
+  startDate            DateTime    @map("start_date")
+  endDate              DateTime    @map("end_date")
+  registrationDeadline DateTime?   @map("registration_deadline")
+  registrationUrl      String?     @map("registration_url")
+  eligibility          String?     @db.Text
+  teamSize             String?     @map("team_size")
+  skills               String[]    @default([])
+  prizeInfo            String?     @map("prize_info") @db.Text
+  certificateInfo      String?     @map("certificate_info")
+  contactInfo          String?     @map("contact_info")
+  rejectionReason      String?     @map("rejection_reason") @db.Text
+  capacity             Int?
+  isFree               Boolean     @default(true) @map("is_free")
+  price                Decimal?    @db.Decimal(10, 2)
+  currency             String      @default("LKR")
+  tags                 String[]    @default([])
+  viewCount            Int         @default(0) @map("view_count")
+  featured             Boolean     @default(false)
+  createdAt            DateTime    @default(now()) @map("created_at")
+  updatedAt            DateTime    @updatedAt @map("updated_at")
+
+  organization  Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  category      Category            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  university    University?         @relation(fields: [universityId], references: [id], onDelete: SetNull)
+  faculty       Faculty?            @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+  department    Department?         @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  registrations EventRegistration[]
+  bookmarks     EventBookmark[]
+  teams         Team[]
+
+  @@index([organizationId])
+  @@index([categoryId])
+  @@index([universityId])
+  @@index([facultyId])
+  @@index([departmentId])
+  @@index([status])
+  @@index([startDate])
+  @@index([featured])
+  @@index([mode])
+  @@map("events")
+}
+
+model EventRegistration {
+  id           String             @id @default(cuid())
+  eventId      String             @map("event_id")
+  userId       String             @map("user_id")
+  status       RegistrationStatus @default(REGISTERED)
+  notes        String?            @db.Text
+  registeredAt DateTime           @default(now()) @map("registered_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+  @@index([status])
+  @@map("event_registrations")
+}
+
+model EventBookmark {
+  id        String   @id @default(cuid())
+  eventId   String   @map("event_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+  @@map("event_bookmarks")
+}
+
+// ==============================================================================
+// 6. Collaboration & Team Finder Models
+// ==============================================================================
+
+model Team {
+  id          String   @id @default(cuid())
+  eventId     String?  @map("event_id")
+  creatorId   String   @map("creator_id")
+  name        String
+  description String?  @db.Text
+  maxMembers     Int      @default(4) @map("max_members")
+  requiredRoles  String[] @default([]) @map("required_roles")
+  requiredSkills String[] @default([]) @map("required_skills")
+  isOpen         Boolean  @default(true) @map("is_open")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  event        Event?            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  creator      User              @relation("TeamCreator", fields: [creatorId], references: [id], onDelete: Restrict)
+  members      TeamMember[]
+  joinRequests TeamJoinRequest[]
+
+  @@index([eventId])
+  @@index([creatorId])
+  @@index([isOpen])
+  @@map("teams")
+}
+
+model TeamMember {
+  id       String   @id @default(cuid())
+  teamId   String   @map("team_id")
+  userId   String   @map("user_id")
+  role     TeamRole @default(MEMBER)
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+  @@map("team_members")
+}
+
+model TeamJoinRequest {
+  id          String            @id @default(cuid())
+  teamId      String            @map("team_id")
+  userId      String            @map("user_id")
+  status      TeamRequestStatus @default(PENDING)
+  message     String?           @db.Text
+  requestedAt DateTime          @default(now()) @map("requested_at")
+  respondedAt DateTime?         @map("responded_at")
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+  @@index([status])
+  @@map("team_join_requests")
+}
+
+// ==============================================================================
+// 7. Notification, Moderation & Verification Models
+// ==============================================================================
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String           @map("user_id")
+  title     String
+  message   String           @db.Text
+  type      NotificationType @default(SYSTEM)
+  isRead    Boolean          @default(false) @map("is_read")
+  linkUrl   String?          @map("link_url")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  reporterId  String       @map("reporter_id")
+  targetType  ReportTarget @map("target_type")
+  targetId    String       @map("target_id")
+  reason      String
+  details     String?      @db.Text
+  status      ReportStatus @default(PENDING)
+  actionNotes String?      @map("action_notes") @db.Text
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  reporter User @relation("ReportedBy", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([reporterId])
+  @@index([targetType, targetId])
+  @@index([status])
+  @@map("reports")
+}
+
+model Verification {
+  id             String             @id @default(cuid())
+  organizationId String             @map("organization_id")
+  requestedById  String             @map("requested_by_id")
+  reviewedById   String?            @map("reviewed_by_id")
+  status         VerificationStatus @default(PENDING)
+  documentUrl    String?            @map("document_url")
+  notes          String?            @db.Text
+  reviewNotes    String?            @map("review_notes") @db.Text
+  reviewedAt     DateTime?          @map("reviewed_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestedBy  User         @relation("VerificationRequester", fields: [requestedById], references: [id], onDelete: Cascade)
+  reviewedBy   User?        @relation("VerificationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([requestedById])
+  @@index([status])
+  @@map("verifications")
+}
